@@ -1,0 +1,15 @@
+{
+  "name": "videorekognition",
+  "version": "1.0.0",
+  "description": "realtime video recognition and notifications",
+  "main": "index.js",
+  "repository": "https://github.com/mucyomiller/videorekognition",
+  "author": "Mucyo Fred",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "aws-sdk": "^2.488.0",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1"
+  }
+}
