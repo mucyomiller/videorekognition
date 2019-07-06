@@ -1,5 +1,6 @@
 // loads env vars
 import path from 'path';
+import fileUpload from 'express-fileupload';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -7,6 +8,11 @@ import express from 'express';
 const app = express();
 
 //adds some middleware
+app.use(fileUpload({
+  limits: {
+    fileSize: 50 * 1024 * 1024
+  },
+}));
 app.use('/public', express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({
@@ -102,6 +108,45 @@ app.post('/stopStreamProcessor', (req, res) => {
     }
 
   });
+});
+
+const searchByImage = (image) => {
+  var params = {
+    CollectionId: "persons_of_interests",
+    Image: {
+      Bytes: image.data.buffer
+    }
+  };
+  rekognition.searchFacesByImage(params, (err, data) => {
+    if (!err) {
+      console.log(`SearchedFaceConfidence ${data.SearchedFaceConfidence}`);
+      data.FaceMatches.forEach(face => {
+        console.log(`We Founds => ${face.Face.FaceId} \n
+        With Similarity of ${face.Similarity} \n
+        He/She Is ${face.Face.ExternalImageId}
+        `);
+        console.log('let save it offline!');
+        let uploadPath = __dirname + `/public/uploads/${face.Face.ExternalImageId}.${image.mimetype.split('/')[1]}`;
+        image.mv(uploadPath, (err) => {
+          if (!err) {
+            console.log('saved file successfull');
+          } else {
+            console.log(err);
+          }
+        });
+      });
+    } else {
+      console.log('Error =>' + err);
+    }
+  });
+}
+app.post('/upload', (req, res) => {
+  if (!req.files) {
+    return res.status(400).send('No files were uploaded. ');
+  }
+  const img = req.files.img;
+  searchByImage(img);
+
 });
 
 
