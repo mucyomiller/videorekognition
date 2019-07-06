@@ -34,15 +34,14 @@ app.get('/', (req, res) => {
 });
 // IndexFaces End Points
 app.post('/indexface', (req, res) => {
+  const image = req.files.image;
 
   var params = {
     CollectionId: "persons_of_interests",
     DetectionAttributes: [],
+    ExternalImageId: req.body.external_image_id,
     Image: {
-      S3Object: {
-        Bucket: req.body.bucket_name || 'somuga-persons-of-interests',
-        Name: req.body.image_name || 'mucyomiller.jpeg'
-      }
+      Bytes: image.data.buffer
     }
   };
   rekognition.indexFaces(params, (err, data) => {
@@ -140,11 +139,11 @@ const searchByImage = (image) => {
     }
   });
 }
-app.post('/upload', (req, res) => {
+app.post('/searchFacesByImage', (req, res) => {
   if (!req.files) {
     return res.status(400).send('No files were uploaded. ');
   }
-  const img = req.files.img;
+  const img = req.files.image;
   searchByImage(img);
 
 });
