@@ -1,6 +1,7 @@
 // loads env vars
 import path from 'path';
 import fileUpload from 'express-fileupload';
+import _ from 'lodash';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -27,6 +28,7 @@ AWS.config.update({
   region: 'us-east-1'
 });
 export const rekognition = new AWS.Rekognition();
+export const kinesis = new AWS.Kinesis();
 
 
 app.get('/', (req, res) => {
@@ -106,6 +108,67 @@ app.post('/stopStreamProcessor', (req, res) => {
       res.json(err);
     }
 
+  });
+});
+
+// temporary retrieves results
+app.post('/results', (req, res) => {
+  var params = {
+    ShardIterator: req.body.shard_iterator,
+  };
+  kinesis.getRecords(params, (err, data) => {
+    if (!err) {
+      console.log(`Next ShardIterator Key => ${data.NextShardIterator}`);
+      data.Records.forEach(Record => {
+        const data = Buffer.from(Record.Data);
+        if (typeof data !== "undefined") {
+          const resObj = JSON.parse(data);
+          resObj.FaceSearchResponse.forEach(response => {
+            response.MatchedFaces.forEach(MatchedFace => {
+              console.log(`###############  START  #################### \n\n`);
+
+              console.log(`we have confidence of  =>  ${MatchedFace.Face.Confidence} \n`);
+              console.log(`That ${MatchedFace.Face.FaceId} is \n`);
+              console.log(`${MatchedFace.Face.ExternalImageId}`);
+
+              console.log(`###############  END  #################### \n\n`);
+            });
+
+          });
+        } else {
+          console.log(`Waiting data ....`);
+        }
+      })
+    } else {
+      res.status(404).json(data);
+    }
+  });
+});
+
+app.get('/describeStream', (req, res) => {
+  var params = {
+    StreamName: req.body.stream_name || 'midatastream'
+  };
+  kinesis.describeStream(params, (err, data) => {
+    if (!err) {
+      res.status(200).json(data);
+    } else {
+      res.status(404).json(err);
+    }
+  });
+});
+app.get('/getShardIterator', (req, res) => {
+  var params = {
+    ShardId: req.body.shard_id || 'shardId-000000000000',
+    ShardIteratorType: "TRIM_HORIZON",
+    StreamName: req.body.stream_name || 'midatastream'
+  };
+  kinesis.getShardIterator(params, (err, data) => {
+    if (!err) {
+      res.status(200).json(data);
+    } else {
+      res.status(404).json(err);
+    }
   });
 });
 
