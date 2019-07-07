@@ -124,15 +124,19 @@ app.post('/results', (req, res) => {
         if (typeof data !== "undefined") {
           const resObj = JSON.parse(data);
           resObj.FaceSearchResponse.forEach(response => {
-            response.MatchedFaces.forEach(MatchedFace => {
-              console.log(`###############  START  #################### \n\n`);
+            const _uniqData = _.uniqBy(response.MatchedFaces, (MatchedFace) => MatchedFace.Face.FaceId);
+            // console.log(`start of my datas`); #
+            // console.log(JSON.stringify(_uniqData)); #
+            // console.log(`##### end of my datas`); #
+            // response.MatchedFaces.forEach(MatchedFace => {
+            //   console.log(`###############  START  #################### \n\n`);
 
-              console.log(`we have confidence of  =>  ${MatchedFace.Face.Confidence} \n`);
-              console.log(`That ${MatchedFace.Face.FaceId} is \n`);
-              console.log(`${MatchedFace.Face.ExternalImageId}`);
+            //   console.log(`we have confidence of  =>  ${MatchedFace.Face.Confidence} \n`);
+            //   console.log(`That ${MatchedFace.Face.FaceId} is \n`);
+            //   console.log(`${MatchedFace.Face.ExternalImageId}`);
 
-              console.log(`###############  END  #################### \n\n`);
-            });
+            //   console.log(`###############  END  #################### \n\n`);
+            // });
 
           });
         } else {
