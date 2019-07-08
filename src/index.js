@@ -118,33 +118,28 @@ app.post('/results', (req, res) => {
   };
   kinesis.getRecords(params, (err, data) => {
     if (!err) {
-      console.log(`Next ShardIterator Key => ${data.NextShardIterator}`);
+      let response = {};
+      response.next_iterator = data.NextShardIterator;
+      let arr = [];
       data.Records.forEach(Record => {
         const data = Buffer.from(Record.Data);
         if (typeof data !== "undefined") {
           const resObj = JSON.parse(data);
           resObj.FaceSearchResponse.forEach(response => {
             const _uniqData = _.uniqBy(response.MatchedFaces, (MatchedFace) => MatchedFace.Face.FaceId);
-            // console.log(`start of my datas`); #
-            // console.log(JSON.stringify(_uniqData)); #
-            // console.log(`##### end of my datas`); #
-            // response.MatchedFaces.forEach(MatchedFace => {
-            //   console.log(`###############  START  #################### \n\n`);
-
-            //   console.log(`we have confidence of  =>  ${MatchedFace.Face.Confidence} \n`);
-            //   console.log(`That ${MatchedFace.Face.FaceId} is \n`);
-            //   console.log(`${MatchedFace.Face.ExternalImageId}`);
-
-            //   console.log(`###############  END  #################### \n\n`);
-            // });
-
+            arr.push(..._uniqData);
           });
         } else {
           console.log(`Waiting data ....`);
         }
       })
+      response.data = _.uniqBy(arr, (e) => e.Face.ExternalImageId);
+      res.status(200).json(response);
     } else {
-      res.status(404).json(data);
+      res.status(404).json({
+        status: res.statusCode,
+        data: err
+      });
     }
   });
 });
